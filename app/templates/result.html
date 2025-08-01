@@ -1,0 +1,20 @@
+<!-- templates/result.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scraped Case Details</title>
+</head>
+<body>
+    <h2>Scraped Case Information</h2>
+
+    {% if result %}
+        <p><strong>Petitioner:</strong> {{ result.petitioner }}</p>
+        <p><strong>Respondent:</strong> {{ result.respondent }}</p>
+        <p><strong>Filing Date:</strong> {{ result.filing_date }}</p>
+        <p><strong>Next Hearing Date:</strong> {{ result.next_hearing_date }}</p>
+        <p><strong>Most Recent Order:</strong> <a href="{{ result.latest_order_url }}" target="_blank">View PDF</a></p>
+    {% else %}
+        <p>No data was extracted.</p>
+    {% endif %}
+</body>
+</html>

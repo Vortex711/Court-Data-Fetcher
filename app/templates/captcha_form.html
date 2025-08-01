@@ -1,0 +1,7 @@
+<!-- templates/captcha.html -->
+<h3>Enter CAPTCHA</h3>
+<img src="{{ captcha_path }}" alt="CAPTCHA">
+<form method="POST" action="/verify">
+    <input type="text" name="captcha" placeholder="Enter CAPTCHA" required>
+    <button type="submit">Submit</button>
+</form>
