@@ -1,5 +1,17 @@
-venv/
+# Python bytecode
 __pycache__/
-captcha.png
+*.py[cod]
+
+# Virtual environment
+venv/
+
+# Environment variables
 .env
-orders/
+
+# Selenium driver (OS-specific binary)
+driver/chromedriver.exe
+
+# Captcha image and downloaded PDFs
+app/static/captcha.png
+app/static/orders/
+
