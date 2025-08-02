@@ -112,14 +112,50 @@ def extract_case_details(driver, captcha_text):
         go_button = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.XPATH, '//button[@onclick="submitCaseNo();"]'))
         )
+        # Click the "Go" button
         go_button.click()
-        print("⏳ Submitted CAPTCHA... waiting for result list...")
+        print("⏳ Submitted CAPTCHA... waiting for result list or error modal...")
+
+        try:
+            # Wait for either results or modal
+            WebDriverWait(driver, 10).until(
+                lambda d: "dispTable" in d.page_source or "validateError" in d.page_source
+            )
+
+            try:
+                # Wait briefly to see if the CAPTCHA modal becomes visible
+                WebDriverWait(driver, 4).until(
+                    EC.visibility_of_element_located((By.ID, "validateError"))
+                )
+                print("❌ CAPTCHA incorrect — validation modal detected.")
+                return {
+                    "success": False,
+                    "message": "CAPTCHA incorrect! Please try again."
+                }
+            except TimeoutException:
+                # No CAPTCHA modal appeared — move on
+                print("✅ No CAPTCHA error modal detected.")
+
+
+        except Exception as e:
+            print("❌ Error or timeout waiting for CAPTCHA validation:", e)
+            return {
+                "success": False,
+                "message": "Error or timeout waiting for CAPTCHA validation"
+            }
+
 
         # Wait for the result summary table to appear
-        WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.ID, "dispTable"))
-        )
+        try:
+            WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.ID, "dispTable"))
+            )
+        except TimeoutException:
+            print("❌ Case data table not found — likely invalid case number.")
+            return {"success": False, "message": "No records found for the given case number."}
+
         time.sleep(3)
+
 
         # Click the first "View" link to open detailed view
         print("👁️ Clicking 'View' to load case details...")
@@ -257,13 +293,16 @@ def extract_case_details(driver, captcha_text):
 
         print("✅ Final case data extracted.")
         return {
-            "petitioner": petitioner,
-            "petitioner_advocate": pet_advocate,
-            "respondent": respondent,
-            "filing_date": filing_date,
-            "next_hearing_date": next_hearing_date,
-            "latest_order_url": latest_order_local_path,
-            "all_orders": order_entries
+            "success": True,
+            "data": {
+                "petitioner": petitioner,
+                "petitioner_advocate": pet_advocate,
+                "respondent": respondent,
+                "filing_date": filing_date,
+                "next_hearing_date": next_hearing_date,
+                "latest_order_url": latest_order_local_path,
+                "all_orders": order_entries
+            }
         }
 
     except Exception as e:

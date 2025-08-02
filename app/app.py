@@ -47,7 +47,7 @@ def verify():
     user_id = session.get('user_id')
 
     if not user_id or user_id not in drivers:
-        return "⚠️ Session expired or invalid. Please try again."
+        return render_template("error.html", message="Session expired or invalid. Please try again.")
 
     driver = drivers.pop(user_id)  # remove from memory after use
 
@@ -58,16 +58,17 @@ def verify():
 
     result = extract_case_details(driver, captcha_input)
 
-    status = "success" if result else "fail"
+    
+    status = "success" if result and result.get("success") else "fail"
     import json
     log_case_query(case_type, case_number, filing_year, captcha_input, status, json.dumps(result, indent=2))
 
     
 
-    if result:
-        return render_template('result.html', result=result)
+    if result.get("success"):
+        return render_template("result.html", result=result["data"])
     else:
-        return "❌ Failed to extract case data. Try again."
+        return render_template("error.html", message=result.get("message", "Something went wrong."))
 
 if __name__ == '__main__':
     app.run(debug=True)
