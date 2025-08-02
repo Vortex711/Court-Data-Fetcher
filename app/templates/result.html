@@ -1,25 +1,44 @@
-<!-- templates/result.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Scraped Case Details</title>
+  <title>Case Details</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 </head>
-<body>
-    <h2>Scraped Case Information</h2>
+<body class="p-4">
+  <div class="container">
+    <h2 class="mb-4">Scraped Case Information</h2>
 
-    {% if result %}
-        <p><strong>Petitioner:</strong> {{ result.petitioner }}</p>
-        <p><strong>Respondent:</strong> {{ result.respondent }}</p>
-        <p><strong>Filing Date:</strong> {{ result.filing_date }}</p>
-        <p><strong>Next Hearing Date:</strong> {{ result.next_hearing_date }}</p>
-        <p><strong>Most Recent Order:</strong> {% if result.latest_order_url %}
-            <a href="{{ result.latest_order_url }}" target="_blank">View Latest Order PDF</a>
-                    {% else %}
-                        <p>No recent order available.</p>
-                    {% endif %}
-                    </p>
-                        {% else %}
-                            <p>No data was extracted.</p>
-                        {% endif %}
+    <ul class="list-group mb-4">
+      <li class="list-group-item"><strong>Petitioner:</strong> {{ result.petitioner }}</li>
+      <li class="list-group-item"><strong>Petitioner's Advocate:</strong> {{ result.petitioner_advocate }}</li>
+      <li class="list-group-item"><strong>Respondent:</strong> {{ result.respondent }}</li>
+      <li class="list-group-item"><strong>Filing Date:</strong> {{ result.filing_date }}</li>
+      <li class="list-group-item"><strong>Next Hearing Date:</strong> {{ result.next_hearing_date }}</li>
+    </ul>
+
+    {% if result.latest_order_url %}
+      <h5>📄 Most Recent Order:</h5>
+      <p><a href="{{ result.latest_order_url }}" class="btn btn-success" download target="_blank">Download Latest Order PDF</a></p>
+    {% else %}
+      <p class="text-danger">⚠️ No recent order available.</p>
+    {% endif %}
+
+    {% if result.all_orders and result.all_orders|length > 1 %}
+      <hr>
+      <h5>📚 Other Previous Orders (Not downloadable)</h5>
+      <ul class="list-group">
+        {% for order in result.all_orders[:-1] %}
+          <li class="list-group-item">
+            📅 Order Date: <strong>{{ order.date }}</strong>
+            <br>
+            <small class="text-muted">[Only the latest order is available for download]</small>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <hr>
+    <a href="/" class="btn btn-secondary mt-4">🔄 Search Another Case</a>
+  </div>
 </body>
 </html>

@@ -1,5 +1,8 @@
 from flask import Flask, render_template, request, session, redirect, url_for
 from scraper import navigate_to_captcha, extract_case_details
+from database import init_db, log_case_query
+init_db()  # Called on app startup
+
 import uuid
 
 app = Flask(__name__)
@@ -48,7 +51,18 @@ def verify():
 
     driver = drivers.pop(user_id)  # remove from memory after use
 
+    # Read form data again for logging
+    case_type = session.get('case_type', '')
+    case_number = session.get('case_number', '')
+    filing_year = session.get('filing_year', '')
+
     result = extract_case_details(driver, captcha_input)
+
+    status = "success" if result else "fail"
+    import json
+    log_case_query(case_type, case_number, filing_year, captcha_input, status, json.dumps(result, indent=2))
+
+    
 
     if result:
         return render_template('result.html', result=result)

@@ -1,49 +1,108 @@
-<!-- 📄 templates/form.html -->
 <!DOCTYPE html>
 <html>
 <head>
   <title>eCourts Case Fetcher</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 </head>
-<body class="p-4">
+<body class="bg-light p-5">
 
   <div class="container">
-    <h2 class="mb-4">Fetch Case Details</h2>
-    <form method="POST" action="/scrape">
-      <div class="row align-items-center mb-3">
-        <div class="col-md-2 text-end">
-          <label for="case_type" class="form-label">Case Type</label>
-        </div>
-        <div class="col-md-3">
-          <select name="case_type" id="case_type" class="form-select" required>
-            <option value="">Select Case Type</option>
-            <option value="1^3">CA - CIVIL APPEAL</option>
-            <option value="38^3">COMI - COMPLAINT IPC</option>
-            <option value="4^3">CS - CIVIL SUIT</option>
-            <option value="46^3">HMA - HINDU MARRIAGE ACT</option>
-            <option value="43^3">MACP - MOTOR ACCIDENT CLAIM PETITION</option>
-            <option value="27^3">NDPS - NDPS ACT</option>
-            <!-- Add more values if needed -->
-          </select>
+    <div class="card shadow-sm p-4">
+      <h2 class="mb-4 text-center text-primary">📄 eCourts Case Info Fetcher</h2>
+
+      <form method="POST" action="/scrape">
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label for="case_type" class="form-label">Case Type</label>
+            <select name="case_type" id="case_type" class="form-select" required>
+              <option value="">Select Case Type</option>
+              <option value="61^3">446 CR. P.C - Proceeding Under sec. 446 Crpc</option>
+              <option value="3^3">APP - APPLICATION</option>
+              <option value="13^3">ARB - ARBITRATION CASE</option>
+              <option value="25^3">BA - BAIL APPLICATION</option>
+              <option value="1^3">CA - CIVIL APPEAL</option>
+              <option value="37^3">CHA - CHALLAN ACT</option>
+              <option value="36^3">CHI - CHALLAN IPC</option>
+              <option value="2^3">CMA - CIVIL MISCELLANEOUS APPEAL</option>
+              <option value="18^3">CM APPLI - CIVILMISCELLANEOUS APPLICATION</option>
+              <option value="39^3">COMA - COMPLAINT ACT</option>
+              <option value="38^3">COMI - COMPLAINT IPC</option>
+              <option value="69^3">COMMERCIAL APPEAL</option>
+              <option value="68^3">COMMERCIAL SUIT</option>
+              <option value="64^3">CP - Contempt Petition</option>
+              <option value="49^3">CR - CIVIL REVISION</option>
+              <option value="35^3">CRA - CRIMINAL APPEALS</option>
+              <option value="24^3">CRM - CRIMINAL MISC  APPLICATION</option>
+              <option value="40^3">CRMP - CRIMINAL MISC PROCEEDINGS</option>
+              <option value="33^3">CRR - CRIMINAL REVISION</option>
+              <option value="4^3">CS - CIVIL SUIT</option>
+              <option value="11^3">CS37 - SUIT U/O XXXVII OF C.P.C.</option>
+              <option value="31^3">DMC - DIVORCE AND MATRIMONIAL CASES</option>
+              <option value="29^3">ELC - ELECTRICITY ACT</option>
+              <option value="48^3">EP - ELECTION PETITION</option>
+              <option value="12^3">EXE - EXECUTION</option>
+              <option value="8^3">FD - Final Decree</option>
+              <option value="9^3">GW - GUARDIANS AND WARDS CASE</option>
+              <option value="67^3">HAMA - HINDU ADOPTATION MAINT. ACT</option>
+              <option value="58^3">HDRA - H.D.R. Act</option>
+              <option value="46^3">HMA - HINDU MARRIAGE ACT</option>
+              <option value="57^3">HMCA - Haryana Municipal Corp. Act</option>
+              <option value="15^3">INDIG - PAUPER APPLICATION</option>
+              <option value="16^3">INDIGA - PAUPER APPEAL</option>
+              <option value="21^3">INSO - INSOLVENCY</option>
+              <option value="60^3">IT ACT - I.T Act</option>
+              <option value="23^3">JJB - JUVENILE</option>
+              <option value="14^3">LAC - CASE U LAND ACQU ACT 1894</option>
+              <option value="62^3">LAC EXE - LAC Execution</option>
+              <option value="63^3">LAC MISC - LAC Misc.</option>
+              <option value="44^3">MACM - MOTOR ACCIDENT CLAIM  MISC PET</option>
+              <option value="66^3">MACM- FORM1 - MOTOR ACCIDENT CLAIM  MISC. F1</option>
+              <option value="43^3">MACP - MOTOR ACCIDENT CLAIM PETITION</option>
+              <option value="51^3">MHA - MENTAL HEALTH ACT</option>
+              <option value="26^3">MNT125 - MAINTAINANCE U/S 125 CR. P.C.</option>
+              <option value="19^3">MPL - DECL U MUSLIM PRSNL LAW 1937</option>
+              <option value="20^3">MPLA - APL U MUSLIM PERSONAL LAW 1937</option>
+              <option value="56^3">NACT - 138 NIA ACT</option>
+              <option value="27^3">NDPS - NDPS ACT</option>
+              <option value="53^3">OBJ - OBJECTION</option>
+              <option value="28^3">PC - CORRUPTION ACT</option>
+              <option value="22^3">PFA - CASES U PRVTN OF FOOD ADLTRTN</option>
+              <option value="50^3">PFC - PUNJAB FINANCIAL CORP.</option>
+              <option value="65^3">PP - Protection Petition</option>
+              <option value="32^3">PRI - APLCT U/O 31 OF PUN RLF INDEBT</option>
+              <option value="17^3">PROB - PROBATE CASE</option>
+              <option value="6^3">RA - RENT APPEAL</option>
+              <option value="47^3">REMP - REMAND PAPERS</option>
+              <option value="10^3">REW APP - REVIEW APPLICATION</option>
+              <option value="5^3">RP - PETITIONS UNDER RENT ACT</option>
+              <option value="34^3">SC - SESSIONS CASES</option>
+              <option value="7^3">SUCC - SUCCESSION CASE</option>
+              <option value="41^3">SUMM - SUMMARY CASES</option>
+              <option value="45^3">TA - TRANSFER APPLICATION</option>
+              <option value="55^3">TELA ACT - Misc. Civil Cases</option>
+              <option value="59^3">TELE ACT - TELEPHONE ACT</option>
+              <option value="52^3">TRA - 7 TRUST ACT</option>
+              <option value="54^3">UCR - UNTRACE/CANCELLATION REPORT</option>
+              <option value="30^3">WKF - WAKF ACT</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label for="case_number" class="form-label">Case Number</label>
+            <input type="text" id="case_number" name="case_number" class="form-control" maxlength="7" placeholder="e.g. 123" required>
+          </div>
+
+          <div class="col-md-4">
+            <label for="filing_year" class="form-label">Filing Year</label>
+            <input type="text" id="filing_year" name="filing_year" class="form-control" maxlength="4" placeholder="e.g. 2025" required>
+          </div>
         </div>
 
-        <div class="col-md-2 text-end">
-          <label for="case_number" class="form-label">Case Number</label>
+        <div class="text-center">
+          <button type="submit" class="btn btn-primary px-5">🔍 Fetch Case Info</button>
         </div>
-        <div class="col-md-2">
-          <input type="text" id="case_number" name="case_number" class="form-control" maxlength="7" placeholder="Case No" required>
-        </div>
-
-        <div class="col-md-1 text-end">
-          <label for="filing_year" class="form-label">Year</label>
-        </div>
-        <div class="col-md-2">
-          <input type="text" id="filing_year" name="filing_year" class="form-control" maxlength="4" placeholder="e.g. 2025" required>
-        </div>
-      </div>
-
-      <button type="submit" class="btn btn-primary">Fetch Case Info</button>
-    </form>
+      </form>
+    </div>
   </div>
 
 </body>
