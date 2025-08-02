@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from urllib.parse import urljoin, unquote
+from selenium.webdriver.chrome.options import Options
 import re
 import time
 import requests
@@ -14,8 +15,13 @@ import os, traceback, uuid
 
 def navigate_to_captcha(case_type, case_number, filing_year):
     try:
+        options = Options()
+        options.add_argument("--headless")  # ✅ Hides the window
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1280,800")
+
         service = Service(executable_path="../driver/chromedriver.exe")
-        driver = webdriver.Chrome(service=service)
+        driver = webdriver.Chrome(service=service, options=options)
         driver.get("https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index")
 
         # Close validation popup (robust version)

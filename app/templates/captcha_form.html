@@ -11,7 +11,10 @@
       <h4 class="mb-3 text-primary">🔒 CAPTCHA Verification</h4>
       <p class="text-muted mb-4">Please enter the CAPTCHA below to continue.</p>
 
-      <img src="{{ captcha_path }}" alt="CAPTCHA Image" class="img-thumbnail mb-3" style="max-width: 250px;">
+      <img src="{{ captcha_path }}" alt="CAPTCHA Image"
+        class="img-thumbnail mb-3 d-block mx-auto"
+        style="max-width: 250px;">
+
 
       <form method="POST" action="/verify">
         <div class="input-group mb-3">
@@ -21,6 +24,12 @@
       </form>
     </div>
   </div>
-
+<script>
+  document.querySelector('form').addEventListener('submit', function(e) {
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
+  });
+</script>
 </body>
 </html>
