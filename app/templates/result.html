@@ -12,9 +12,14 @@
         <p><strong>Respondent:</strong> {{ result.respondent }}</p>
         <p><strong>Filing Date:</strong> {{ result.filing_date }}</p>
         <p><strong>Next Hearing Date:</strong> {{ result.next_hearing_date }}</p>
-        <p><strong>Most Recent Order:</strong> <a href="{{ result.latest_order_url }}" target="_blank">View PDF</a></p>
-    {% else %}
-        <p>No data was extracted.</p>
-    {% endif %}
+        <p><strong>Most Recent Order:</strong> {% if result.latest_order_url %}
+            <a href="{{ result.latest_order_url }}" target="_blank">View Latest Order PDF</a>
+                    {% else %}
+                        <p>No recent order available.</p>
+                    {% endif %}
+                    </p>
+                        {% else %}
+                            <p>No data was extracted.</p>
+                        {% endif %}
 </body>
 </html>

@@ -8,7 +8,7 @@ from urllib.parse import urljoin, unquote
 import re
 import time
 import requests
-import os, traceback
+import os, traceback, uuid
 
 
 
@@ -77,6 +77,7 @@ def navigate_to_captcha(case_type, case_number, filing_year):
 
     from io import BytesIO
 
+    time.sleep(2)
     # Save CAPTCHA image using Selenium's screenshot functionality
     captcha_img = driver.find_element(By.ID, "captcha_image")
     captcha_bytes = captcha_img.screenshot_as_png  # Get raw PNG bytes
@@ -94,31 +95,35 @@ def navigate_to_captcha(case_type, case_number, filing_year):
 
 def extract_case_details(driver, captcha_text):
     try:
+        import requests
+        import os
+        import uuid
+
         print("🧠 Filling CAPTCHA...")
 
         # Fill in CAPTCHA
-        captcha_input = WebDriverWait(driver, 10).until(
+        captcha_input = WebDriverWait(driver, 20).until(
             EC.visibility_of_element_located((By.ID, "case_captcha_code"))
         )
         captcha_input.clear()
         captcha_input.send_keys(captcha_text)
 
         # Click the "Go" button
-        go_button = WebDriverWait(driver, 2).until(
+        go_button = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.XPATH, '//button[@onclick="submitCaseNo();"]'))
         )
         go_button.click()
         print("⏳ Submitted CAPTCHA... waiting for result list...")
 
         # Wait for the result summary table to appear
-        WebDriverWait(driver, 10).until(
+        WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.ID, "dispTable"))
         )
         time.sleep(3)
 
         # Click the first "View" link to open detailed view
         print("👁️ Clicking 'View' to load case details...")
-        view_button = WebDriverWait(driver, 10).until(
+        view_button = WebDriverWait(driver, 15).until(
             EC.element_to_be_clickable((By.XPATH, '//table[@id="dispTable"]//a[contains(text(), "View")]'))
         )
         driver.execute_script("arguments[0].scrollIntoView(true);", view_button)
@@ -155,21 +160,100 @@ def extract_case_details(driver, captcha_text):
         except:
             next_hearing_date = "Not found"
 
-        # Orders
+        # ✅ Orders
         order_entries = []
-        order_rows = driver.find_elements(By.XPATH, '//table[contains(@class, "order_table")]//tr[position()>1]')
-        for row in order_rows:
-            tds = row.find_elements(By.TAG_NAME, 'td')
-            if len(tds) >= 3:
-                order_date = tds[1].text.strip()
-                anchor = tds[2].find_element(By.TAG_NAME, 'a')
-                onclick = anchor.get_attribute("onclick")
-                match = re.search(r"filename=(/[^&'\"]+)", onclick)
-                if match:
-                    url = urljoin("https://services.ecourts.gov.in/ecourtindia_v6/", unquote(match.group(1)))
-                    order_entries.append({"date": order_date, "url": url})
 
+        # Wait for table to appear
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//table[contains(@class, "order_table")]'))
+        )
+        time.sleep(2)  # Let JS populate rows
+
+        # Get all <tr> rows after header
+        order_rows = driver.find_elements(By.XPATH, '//table[contains(@class, "order_table")]//tr[position()>1]')
+
+        for row in order_rows:
+            try:
+                tds = row.find_elements(By.TAG_NAME, 'td')
+                if len(tds) >= 2:
+                    order_date = tds[1].text.strip()
+                    # Try to find the <a> inside any td
+                    anchor = row.find_element(By.XPATH, './/a[contains(@onclick, "displayPdf")]')
+                    onclick = anchor.get_attribute("onclick")
+
+                    match = re.search(r"displayPdf\('([^']+)'\)", onclick)
+                    if match:
+                        display_pdf_args = match.group(1).replace("&amp;", "&")
+                        viewer_url = urljoin("https://services.ecourts.gov.in/ecourtindia_v6/", display_pdf_args)
+                        order_entries.append({
+                            "date": order_date,
+                            "url": viewer_url,
+                            "onclick": onclick
+                        })
+            except Exception as inner_err:
+                print("⚠️ Failed to parse order row:", inner_err)
+
+        # Latest order info
         latest_order_url = order_entries[-1]["url"] if order_entries else None
+        latest_order_onclick = order_entries[-1]["onclick"] if order_entries else None
+
+        # ✅ Execute the JS to view latest PDF
+        if latest_order_onclick:
+            try:
+                print(f"🧠 Executing displayPdf JS: {latest_order_onclick}")
+                driver.execute_script(latest_order_onclick)
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, '//iframe[contains(@src, "display_pdf")]'))
+                )
+                print("📄 PDF viewer appeared.")
+            except Exception as e:
+                print("⚠️ PDF viewer did not appear — maybe blocked.")
+                print("Error:", e)
+        else:
+            print("⚠️ No onclick JS found for latest order.")
+
+        # ✅ After PDF viewer is loaded, extract the <object> URL
+        try:
+            print("📥 Looking for actual PDF URL inside <object> tag...")
+            object_tag = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//div[@id="modal_order_body"]//object'))
+            )
+            pdf_src = object_tag.get_attribute("data")
+            print("🔗 Found PDF object source:", pdf_src)
+
+            # Build full URL
+            pdf_full_url = urljoin(driver.current_url, pdf_src)
+
+            # Use session cookies from Selenium
+            cookies = {c['name']: c['value'] for c in driver.get_cookies()}
+            headers = {"User-Agent": "Mozilla/5.0"}
+
+            import requests
+            s = requests.Session()
+            for name, value in cookies.items():
+                s.cookies.set(name, value)
+
+            pdf_response = s.get(pdf_full_url, headers=headers)
+
+            if pdf_response.ok and 'application/pdf' in pdf_response.headers.get('Content-Type', ''):
+                import os, uuid
+                os.makedirs("static/orders", exist_ok=True)
+                pdf_filename = f"order_{uuid.uuid4().hex}.pdf"
+                pdf_path = f"static/orders/{pdf_filename}"
+
+                with open(pdf_path, "wb") as f:
+                    f.write(pdf_response.content)
+
+                latest_order_local_path = f"/{pdf_path}"
+                print("✅ PDF downloaded locally:", latest_order_local_path)
+            else:
+                print("⚠️ PDF request failed or wrong content type.")
+                latest_order_local_path = None
+
+        except Exception as e:
+            print("❌ Failed to download PDF from viewer:", e)
+            latest_order_local_path = None
+
 
         print("✅ Final case data extracted.")
         return {
@@ -178,7 +262,7 @@ def extract_case_details(driver, captcha_text):
             "respondent": respondent,
             "filing_date": filing_date,
             "next_hearing_date": next_hearing_date,
-            "latest_order_url": latest_order_url,
+            "latest_order_url": latest_order_local_path,
             "all_orders": order_entries
         }
 
