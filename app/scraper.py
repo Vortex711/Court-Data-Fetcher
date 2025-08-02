@@ -13,84 +13,92 @@ import os, traceback, uuid
 
 
 def navigate_to_captcha(case_type, case_number, filing_year):
-    service = Service(executable_path="../driver/chromedriver.exe")
-    driver = webdriver.Chrome(service=service)
-    driver.get("https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index")
-
-    # Close validation popup (robust version)
     try:
-        print("⏳ Waiting for validation popup...")
+        service = Service(executable_path="../driver/chromedriver.exe")
+        driver = webdriver.Chrome(service=service)
+        driver.get("https://services.ecourts.gov.in/ecourtindia_v6/?p=casestatus/index")
 
-        # Wait for popup to appear (up to 5s)
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.ID, "validateError"))
-        )
+        # Close validation popup (robust version)
+        try:
+            print("⏳ Waiting for validation popup...")
 
-        # Now wait until the close button is clickable
-        for _ in range(3):  # try up to 3 times
-            try:
-                close_btn = WebDriverWait(driver, 2).until(
-                    EC.element_to_be_clickable((By.XPATH, '//div[@id="validateError"]//button[contains(@class, "btn-close")]'))
-                )
-                driver.execute_script("arguments[0].click();", close_btn)
+            # Wait for popup to appear (up to 5s)
+            WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.ID, "validateError"))
+            )
 
-                # Wait for style to become display: none
-                WebDriverWait(driver, 5).until(
-                    lambda d: d.execute_script(
-                        "return document.getElementById('validateError')?.style.display === 'none'"
+            # Now wait until the close button is clickable
+            for _ in range(3):  # try up to 3 times
+                try:
+                    close_btn = WebDriverWait(driver, 2).until(
+                        EC.element_to_be_clickable((By.XPATH, '//div[@id="validateError"]//button[contains(@class, "btn-close")]'))
                     )
-                )
-                print("✅ Validation popup closed.")
+                    driver.execute_script("arguments[0].click();", close_btn)
+
+                    # Wait for style to become display: none
+                    WebDriverWait(driver, 5).until(
+                        lambda d: d.execute_script(
+                            "return document.getElementById('validateError')?.style.display === 'none'"
+                        )
+                    )
+                    print("✅ Validation popup closed.")
+                    break
+                except Exception as popup_try_error:
+                    print("🔁 Retry closing popup...")
+                    time.sleep(1)
+            else:
+                print("❌ Popup could not be closed after retries.")
+
+        except TimeoutException:
+            print("✅ No validation popup appeared.")
+        except Exception as e:
+            print("❌ Unexpected error while closing popup:", e)
+
+
+
+        # Select Haryana and Faridabad
+        Select(driver.find_element(By.ID, "sess_state_code")).select_by_value("14")
+        time.sleep(1)
+        Select(driver.find_element(By.ID, "sess_dist_code")).select_by_value("5")
+        time.sleep(1)
+        court_dropdown = Select(driver.find_element(By.ID, "court_complex_code"))
+        for option in court_dropdown.options:
+            if "District Court, Faridabad" in option.text:
+                court_dropdown.select_by_visible_text(option.text)
                 break
-            except Exception as popup_try_error:
-                print("🔁 Retry closing popup...")
-                time.sleep(1)
-        else:
-            print("❌ Popup could not be closed after retries.")
+
+        time.sleep(1)
+        driver.find_element(By.ID, "casenumber-tabMenu").click()
+        time.sleep(2)
+
+        # Fill the case form
+        Select(driver.find_element(By.ID, "case_type")).select_by_value(case_type)
+        driver.find_element(By.ID, "search_case_no").send_keys(case_number)
+        driver.find_element(By.ID, "rgyear").send_keys(filing_year)
+
+        from io import BytesIO
+
+        time.sleep(2)
+        # Save CAPTCHA image using Selenium's screenshot functionality
+        captcha_img = driver.find_element(By.ID, "captcha_image")
+        captcha_bytes = captcha_img.screenshot_as_png  # Get raw PNG bytes
+
+        # Save to static folder
+        static_path = os.path.join("static", "captcha.png")
+        with open(static_path, "wb") as f:
+            f.write(captcha_bytes)
+
+        print("✅ CAPTCHA saved to", static_path)
+
+        # Return driver and URL for use in HTML
+        return driver, "/static/captcha.png"
 
     except TimeoutException:
-        print("✅ No validation popup appeared.")
+        print("❌ Site timeout — court server not responding.")
+        return None, None
     except Exception as e:
-        print("❌ Unexpected error while closing popup:", e)
-
-
-
-    # Select Haryana and Faridabad
-    Select(driver.find_element(By.ID, "sess_state_code")).select_by_value("14")
-    time.sleep(1)
-    Select(driver.find_element(By.ID, "sess_dist_code")).select_by_value("5")
-    time.sleep(1)
-    court_dropdown = Select(driver.find_element(By.ID, "court_complex_code"))
-    for option in court_dropdown.options:
-        if "District Court, Faridabad" in option.text:
-            court_dropdown.select_by_visible_text(option.text)
-            break
-
-    time.sleep(1)
-    driver.find_element(By.ID, "casenumber-tabMenu").click()
-    time.sleep(2)
-
-    # Fill the case form
-    Select(driver.find_element(By.ID, "case_type")).select_by_value(case_type)
-    driver.find_element(By.ID, "search_case_no").send_keys(case_number)
-    driver.find_element(By.ID, "rgyear").send_keys(filing_year)
-
-    from io import BytesIO
-
-    time.sleep(2)
-    # Save CAPTCHA image using Selenium's screenshot functionality
-    captcha_img = driver.find_element(By.ID, "captcha_image")
-    captcha_bytes = captcha_img.screenshot_as_png  # Get raw PNG bytes
-
-    # Save to static folder
-    static_path = os.path.join("static", "captcha.png")
-    with open(static_path, "wb") as f:
-        f.write(captcha_bytes)
-
-    print("✅ CAPTCHA saved to", static_path)
-
-    # Return driver and URL for use in HTML
-    return driver, "/static/captcha.png"
+        print("❌ Site navigation failed:", e)
+        return None, None
 
 
 def extract_case_details(driver, captcha_text):

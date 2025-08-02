@@ -25,7 +25,7 @@ def scrape():
     driver, captcha_path = navigate_to_captcha(case_type, case_number, filing_year)
 
     if not captcha_path:
-        return "Failed to load CAPTCHA."
+        return render_template("error.html", message="Court website seems down or unreachable. Please try again later.")
 
     # Create unique ID for this session (stored in cookie)
     user_id = str(uuid.uuid4())
